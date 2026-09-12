@@ -9,12 +9,8 @@
       "critical": false
     },
     "argv": [
-      "/usr/bin/journalctl",
-      "-u",
-      "cedar-demo",
-      "-n",
-      "20",
-      "--no-pager"
+      "/usr/bin/echo",
+      "Dropped you a link to the logs folder on Slack."
     ]
   },
   "view-status": {
@@ -27,10 +23,8 @@
       "critical": false
     },
     "argv": [
-      "/usr/bin/systemctl",
-      "status",
-      "cedar-demo",
-      "--no-pager"
+      "/usr/bin/echo",
+      "The status of the Cedar demo is: running"
     ]
   },
   "restart": {
@@ -43,9 +37,8 @@
       "critical": false
     },
     "argv": [
-      "/usr/bin/systemctl",
-      "restart",
-      "cedar-demo"
+      "/usr/bin/echo",
+      "Cedar demo is restarting..."
     ]
   },
   "restart-ssh": {
@@ -58,9 +51,8 @@
       "critical": true
     },
     "argv": [
-      "/usr/bin/systemctl",
-      "restart",
-      "ssh"
+      "/usr/bin/echo",
+      "ssh is restarting..."
     ]
   }
 }
