@@ -33,7 +33,7 @@
       }
     },
     "actions": {
-      "ReadLogs": {
+      "read-logs": {
         "appliesTo": {
           "principalTypes": ["User"],
           "resourceTypes": ["Service"],
@@ -48,7 +48,7 @@
           }
         }
       },
-      "ViewStatus": {
+      "view-status": {
         "appliesTo": {
           "principalTypes": ["User"],
           "resourceTypes": ["Service"],
@@ -63,7 +63,7 @@
           }
         }
       },
-      "Restart": {
+      "restart": {
         "appliesTo": {
           "principalTypes": ["User"],
           "resourceTypes": ["Service"],
@@ -78,7 +78,7 @@
           }
         }
       },
-      "OpenShell": {
+      "open-shell": {
         "appliesTo": {
           "principalTypes": ["User"],
           "resourceTypes": ["Host"],

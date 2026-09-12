@@ -14,10 +14,10 @@
   "resource": {
     "cedar_entity_mapping": {
       "entity_type": "Linux::Service",
-      "id": "cedar-demo"
+      "id": "ssh"
     },
     "environment": "workshop",
-    "critical": false
+    "critical": true
   },
   "context": {
     "local_console": true,

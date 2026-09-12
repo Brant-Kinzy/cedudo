@@ -10,7 +10,7 @@
     "home": "/home/alice",
     "shell": "/bin/bash"
   },
-  "action": "Linux::Action::\"Restart\"",
+  "action": "Linux::Action::\"restart\"",
   "resource": {
     "cedar_entity_mapping": {
       "entity_type": "Linux::Service",

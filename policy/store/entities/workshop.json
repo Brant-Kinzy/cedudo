@@ -12,6 +12,17 @@
   },
   {
     "uid": {
+      "type": "Linux::Service",
+      "id": "ssh"
+    },
+    "attrs": {
+      "environment": "workshop",
+      "critical": true
+    },
+    "parents": []
+  },
+  {
+    "uid": {
       "type": "Linux::Host",
       "id": "workshop-vm"
     },

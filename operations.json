@@ -1,6 +1,7 @@
 {
-  "view-logs": {
-    "action": "Linux::Action::\"ReadLogs\"",
+  "read-logs": {
+    "action_type": "Linux::Action",
+    "action_id": "read-logs",
     "resource_type": "Linux::Service",
     "resource_id": "cedar-demo",
     "resource_attributes": {
@@ -16,8 +17,9 @@
       "--no-pager"
     ]
   },
-  "status-demo": {
-    "action": "Linux::Action::\"ViewStatus\"",
+  "view-status": {
+    "action_type": "Linux::Action",
+    "action_id": "view-status",
     "resource_type": "Linux::Service",
     "resource_id": "cedar-demo",
     "resource_attributes": {
@@ -31,8 +33,9 @@
       "--no-pager"
     ]
   },
-  "restart-demo": {
-    "action": "Linux::Action::\"Restart\"",
+  "restart": {
+    "action_type": "Linux::Action",
+    "action_id": "restart",
     "resource_type": "Linux::Service",
     "resource_id": "cedar-demo",
     "resource_attributes": {
@@ -43,6 +46,21 @@
       "/usr/bin/systemctl",
       "restart",
       "cedar-demo"
+    ]
+  },
+  "restart-ssh": {
+    "action_type": "Linux::Action",
+    "action_id": "restart",
+    "resource_type": "Linux::Service",
+    "resource_id": "ssh",
+    "resource_attributes": {
+      "environment": "workshop",
+      "critical": true
+    },
+    "argv": [
+      "/usr/bin/systemctl",
+      "restart",
+      "ssh"
     ]
   }
 }

@@ -64,7 +64,7 @@ Authorization requests use four parts (PARC):
 | Part | In this workshop |
 |------|------------------|
 | **Principal** | The original Linux user (`alice` or `bob`), not root |
-| **Action** | A named capability, e.g. `ReadLogs` or `Restart` |
+| **Action** | A named capability, e.g. `read-logs` or `restart` |
 | **Resource** | Usually `Linux::Service::"cedar-demo"` |
 | **Context** | Session facts, especially `local_console` (local vs SSH) |
 
@@ -74,18 +74,18 @@ Cedar is **default-deny**. A matching `forbid` always wins over a `permit`.
 
 | User | Groups | Starter intent |
 |------|--------|----------------|
-| **alice** | `developers` | May read demo logs; may **not** restart yet |
-| **bob** | `operators` | May read logs and restart the demo service **from the local console** |
+| **alice** | `developers` | May read demo logs and view status; may **not** restart yet |
+| **bob** | `operators` | May observe the demo and restart **noncritical** services from the local console |
 
 You will start class logged in as **alice**.
 
-If the prepared image does not already include these accounts, create them with home directories and the groups the starter policies check:
+If the prepared image does not already include these accounts, create them with home directories, bash (not the `useradd` default of `/bin/sh`), and the groups the starter policies check:
 
 ```bash
 sudo groupadd developers
 sudo groupadd operators
-sudo useradd -m -G developers alice
-sudo useradd -m -G operators bob
+sudo useradd -m -s /bin/bash -G developers alice
+sudo useradd -m -s /bin/bash -G operators bob
 ```
 
 ### 5. Optional: open this README offline
@@ -134,7 +134,7 @@ one, only on this host, with these arguments…”. The workshop shows a cleaner
                      /             \
                     v               v
 Browser + Tarp                  Local VM
-Cedarling WASM                  cedudo restart-demo
+Cedarling WASM                  cedudo restart
 Policy testing                         |
                                        v
                                Cedarling Python
@@ -157,16 +157,30 @@ Still as **alice**, run:
 ```bash
 id
 systemctl status cedar-demo --no-pager
-cedudo view-logs
-cedudo restart-demo
+cedudo read-logs
+cedudo view-status
+cedudo restart
+cedudo restart-ssh
 ```
 
 Expected with the starter policies:
 
 | Command | Result |
 |---------|--------|
-| `cedudo view-logs` | **PERMIT** — alice is in `developers` |
-| `cedudo restart-demo` | **DENY** — alice is not in `operators` |
+| `cedudo read-logs` | **PERMIT** — alice is in `developers` |
+| `cedudo view-status` | **PERMIT** — operators and developers may observe the demo |
+| `cedudo restart` | **DENY** — alice is not in `operators` |
+| `cedudo restart-ssh` | **DENY** — `ssh` is a critical service (forbid policy) |
+
+Each CLI operation ID matches its Cedar action except `restart-ssh`, which
+reuses Cedar action `restart` on a different resource:
+
+| Operation ID | Cedar action | Resource |
+|--------------|--------------|----------|
+| `read-logs` | `read-logs` | `Linux::Service::"cedar-demo"` |
+| `view-status` | `view-status` | `Linux::Service::"cedar-demo"` |
+| `restart` | `restart` | `Linux::Service::"cedar-demo"` (`critical: false`) |
+| `restart-ssh` | `restart` | `Linux::Service::"ssh"` (`critical: true`) |
 
 Confirm that direct admin commands cannot be run:
 
@@ -181,11 +195,12 @@ If the facilitator asks you to try **bob** (local console session):
 ```bash
 su - bob
 # or: ssh bob@localhost   (then local_console may be false — see later)
-cedudo restart-demo
+cedudo restart
+cedudo view-status
 ```
 
-As bob on a **local** console, restart should **PERMIT**. Switch back to alice
-when asked.
+As bob on a **local** console, both should **PERMIT**. `cedudo restart-ssh` should
+still **DENY** (critical service). Switch back to alice when asked.
 
 ---
 
@@ -212,10 +227,12 @@ Work through these scenarios and note permit vs deny:
 | Example file | Expected |
 |--------------|----------|
 | `alice-read-logs.json` | PERMIT |
+| `alice-view-status.json` | PERMIT |
 | `alice-restart.json` | DENY |
 | `bob-restart.json` (`local_console: true`) | PERMIT |
 | `bob-restart-remote.json` (`local_console: false`) | DENY |
-| `root-shell.json` (`OpenShell`) | DENY (forbid policy) |
+| `bob-restart-ssh.json` (`ssh` is critical) | DENY (forbid policy) |
+| `root-shell.json` (`open-shell`) | DENY (forbid policy) |
 
 You are learning PARC without standing up an identity provider.
 
@@ -226,9 +243,10 @@ You are learning PARC without standing up an identity provider.
 Open the starter policies under `policy/store/policies/` (or
 `~/cedudo-workshop/policy/store/policies/`). You will see:
 
-- Developers/operators may `ReadLogs` on `cedar-demo`
-- Operators may `Restart` on `cedar-demo` when `context.local_console` is true
-- Everyone is forbidden from `OpenShell`
+- Developers/operators may `read-logs` and `view-status` on `cedar-demo`
+- Operators may `restart` **noncritical** services when `context.local_console` is true
+- Restarting a **critical** service (`ssh`) is forbidden
+- Everyone is forbidden from `open-shell`
 
 **Challenge:** Permit members of `developers` to restart the demo service, but
 only when the resource is noncritical and the request is from the local console.
@@ -240,12 +258,13 @@ Create a new file, for example
 @id("developers-restart-noncritical-local")
 permit (
     principal is Linux::User,
-    action == Linux::Action::"Restart",
+    action == Linux::Action::"restart",
     resource == Linux::Service::"cedar-demo"
 )
 when {
     principal has groups &&
     principal.groups.contains("developers") &&
+    resource has critical &&
     !resource.critical &&
     context has local_console &&
     context.local_console == true
@@ -280,7 +299,7 @@ Note: The deploy script still uses `sudo` for administrative tasks like copying 
 As **alice** on a local console:
 
 ```bash
-cedudo restart-demo
+cedudo restart
 systemctl status cedar-demo --no-pager
 ```
 
@@ -296,8 +315,9 @@ Try to break out. Every attempt below should **fail**:
 
 ```bash
 cedudo ../../bin/bash
-cedudo "restart-demo; /bin/bash"
-cedudo restart-demo --service ssh
+cedudo "restart; /bin/bash"
+cedudo restart --service ssh
+cedudo restart-ssh
 cedudo root-shell
 systemctl restart cedar-demo
 ```
@@ -306,7 +326,8 @@ Why they fail:
 
 - `cedudo` accepts only a kebab-case **operation ID**, not a command path
 - Trailing arguments (like `--service ssh`) are ignored; argv comes from the
-  root-owned manifest
+  root-owned manifest. `cedudo restart-ssh` is a separate operation that Cedar
+  **forbids** because `ssh` is marked `critical`
 - `root-shell` is not in `operations.json` (rejected before Cedar runs)
 - `systemctl` runs without root privileges since cedudo is the only setuid executable
 - You cannot rewrite `/opt/cedudo/operations.json` or `cedudo.cjar` without root access
@@ -326,7 +347,7 @@ in Tarp, and redeploy if you have time.
 @id("forbid-remote-restart")
 forbid (
     principal,
-    action == Linux::Action::"Restart",
+    action == Linux::Action::"restart",
     resource
 )
 when {
@@ -341,7 +362,7 @@ when {
 @id("operators-oncall-restart")
 permit (
     principal is Linux::User,
-    action == Linux::Action::"Restart",
+    action == Linux::Action::"restart",
     resource == Linux::Service::"cedar-demo"
 )
 when {
@@ -397,7 +418,7 @@ privilege path.
 | Tarp will not load policies | Is `python3 ../tools/serve-policy.py` still running? URL exactly `http://127.0.0.1:8000/cedudo.cjar`? |
 | CORS errors in the browser | Use the provided `serve-policy.py` (it sends CORS headers) |
 | `Cedarling initialization failed` | `/opt/cedudo/cedudo.cjar` exists, owned by root, not group/world writable; `metadata.json` uses `cedar_version` (not `policy_engine`) |
-| `unknown operation` | Only IDs in `operations.json` are valid (`view-logs`, `status-demo`, `restart-demo`) |
+| `unknown operation` | Only IDs in `operations.json` are valid (`read-logs`, `view-status`, `restart`, `restart-ssh`) |
 | `operation must match [a-z]…` | Operation IDs are kebab-case only—no paths or shell metacharacters |
 | `must be installed as setuid root` | The C wrapper `/opt/cedudo/cedudo` must have setuid bit. Run: `sudo chmod 4755 /opt/cedudo/cedudo` |
 | Permission denied when running cedudo | The wrapper binary must be executable and have setuid bit. See INSTALL.md for C wrapper setup |

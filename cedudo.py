@@ -2,8 +2,10 @@
 """Workshop Cedar-authorized privilege wrapper (Policy Enforcement Point).
 
 Usage:
-    cedudo view-logs
-    cedudo restart-demo
+    cedudo read-logs
+    cedudo view-status
+    cedudo restart
+    cedudo restart-ssh
 
 The caller supplies only an operation ID. The command and every argument come
 from a root-owned manifest at /opt/cedudo/operations.json. Authorization is
@@ -149,6 +151,11 @@ def invoking_user() -> tuple[pwd.struct_passwd, list[str]]:
     return account, groups
 
 
+def cedar_uid(entity_type: str, entity_id: str) -> str:
+    """Build a Cedar entity UID from separate type and id keys."""
+    return f'{entity_type}::"{entity_id}"'
+
+
 def load_operation(operation_id: str) -> dict[str, Any]:
     """Load and validate one fixed privileged operation from the manifest."""
     require_trusted_file(OPERATIONS_FILE, "operations manifest")
@@ -165,7 +172,8 @@ def load_operation(operation_id: str) -> dict[str, Any]:
 
     operation = manifest[operation_id]
     required = {
-        "action",
+        "action_type",
+        "action_id",
         "resource_type",
         "resource_id",
         "argv",
@@ -177,19 +185,25 @@ def load_operation(operation_id: str) -> dict[str, Any]:
             EX_CONFIG,
         )
 
-    action = operation["action"]
+    action_type = operation["action_type"]
+    action_id = operation["action_id"]
     resource_type = operation["resource_type"]
     resource_id = operation["resource_id"]
     argv = operation["argv"]
 
-    if not isinstance(action, str) or not action:
-        fail(f"invalid action for {operation_id}", EX_CONFIG)
+    if not isinstance(action_type, str) or not action_type:
+        fail(f"invalid action_type for {operation_id}", EX_CONFIG)
+
+    if not isinstance(action_id, str) or not action_id:
+        fail(f"invalid action_id for {operation_id}", EX_CONFIG)
 
     if not isinstance(resource_type, str) or not resource_type:
         fail(f"invalid resource_type for {operation_id}", EX_CONFIG)
 
     if not isinstance(resource_id, str) or not resource_id:
         fail(f"invalid resource_id for {operation_id}", EX_CONFIG)
+
+    operation["action"] = cedar_uid(action_type, action_id)
 
     if (
         not isinstance(argv, list)
@@ -415,8 +429,7 @@ def main() -> NoReturn:
         f"groups={groups} "
         f"operation={operation_id} "
         f"action={operation['action']} "
-        f"resource={operation['resource_type']}::"
-        f"{operation['resource_id']} "
+        f"resource={cedar_uid(operation['resource_type'], operation['resource_id'])} "
         f"local_console={context['local_console']}"
     )
 
