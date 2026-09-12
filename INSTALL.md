@@ -143,20 +143,13 @@ su - alice
 cedudo read-logs
 ```
 
-**What to look for:**
-
-- The `s` in `-rwsr-xr-x` on the **cedudo binary** (not cedudo.py)
-- Permissions `4755` where the `4` prefix indicates setuid
-- Owner must be `root` (UID 0)
-- If you see `-rwxr-xr-x` instead of `-rwsr-xr-x`, the setuid bit is missing
-
-**Common mistake:** Setting setuid on `cedudo.py` instead of the compiled `cedudo` wrapper. The wrapper must have the setuid bit, not the Python script.
 
 ## Troubleshooting
 
 
 | Issue                                                     | Solution                                                                                                                                        |
 | --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `cedudo[18629]: ERROR direct root invocation is not a workshop principal` | You must `su - alice` or `su - bob` to run the demo | 
 | `ModuleNotFoundError: No module named 'cedarling_python'` | Install into the venv the wrapper uses: `sudo /opt/cedudo/venv/bin/pip install cedarling-python`. Do not run `cedudo.py` with system `python3`. |
 | `must be installed as setuid root`                        | Most likely: setuid doesn't work on Python scripts. Use the C wrapper: `./install-wrapper.sh`                                                   |
 | Wrapper not found                                         | Compile it: `gcc -o cedudo cedudo-wrapper.c && sudo cp cedudo /opt/cedudo/cedudo && sudo chmod 4755 /opt/cedudo/cedudo`                         |
@@ -164,9 +157,7 @@ cedudo read-logs
 | `Cedarling initialization failed`                         | Check that `cedudo.cjar` exists and is valid. `metadata.json` must use `cedar_version` (see Cedarling policy store format).                     |
 | `invoking user not found`                                 | Ensure your user account exists in `/etc/passwd`                                                                                                |
 | Permission denied                                         | The **wrapper binary** must be executable with setuid bit set                                                                                   |
-| Script works for root but not regular users               | Check that `/opt/cedudo/cedudo` (not cedudo.py) has the setuid bit: `ls -l /opt/cedudo/cedudo`                                                  |
-
-
+| Script works for root but not regular users               | Check that `/opt/cedudo/cedudo` (not cedudo.py) has the setuid bit: `stat -c '%a' /opt/cedudo/cedudo` Should be '4755'                                                |
 
 
 ### Common Issue: Setuid on Scripts
@@ -199,16 +190,12 @@ sudo chown root:root /opt/cedudo/cedudo
 sudo chmod 4755 /opt/cedudo/cedudo
 ```
 
-
-
 ## Uninstallation
 
 ```bash
 sudo rm -rf /opt/cedudo
 sudo rm -f /usr/local/bin/cedudo
 ```
-
-
 
 ## Workshop Reset
 
