@@ -10,7 +10,7 @@
     "home": "/home/bob",
     "shell": "/bin/bash"
   },
-  "action": "Linux::Action::\"OpenShell\"",
+  "action": "Linux::Action::\"open-shell\"",
   "resource": {
     "cedar_entity_mapping": {
       "entity_type": "Linux::Host",

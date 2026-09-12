@@ -2,15 +2,15 @@
   "principal": {
     "cedar_entity_mapping": {
       "entity_type": "Linux::User",
-      "id": "bob"
+      "id": "alice"
     },
-    "uid": 1001,
-    "gid": 1001,
-    "groups": ["operators"],
-    "home": "/home/bob",
+    "uid": 1000,
+    "gid": 1000,
+    "groups": ["developers"],
+    "home": "/home/alice",
     "shell": "/bin/bash"
   },
-  "action": "Linux::Action::\"restart\"",
+  "action": "Linux::Action::\"view-status\"",
   "resource": {
     "cedar_entity_mapping": {
       "entity_type": "Linux::Service",

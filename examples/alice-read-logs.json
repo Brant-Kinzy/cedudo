@@ -10,7 +10,7 @@
     "home": "/home/alice",
     "shell": "/bin/bash"
   },
-  "action": "Linux::Action::\"ReadLogs\"",
+  "action": "Linux::Action::\"read-logs\"",
   "resource": {
     "cedar_entity_mapping": {
       "entity_type": "Linux::Service",

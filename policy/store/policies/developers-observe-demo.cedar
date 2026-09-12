@@ -1,7 +1,7 @@
-@id("developers-read-logs")
+@id("developers-observe-demo")
 permit (
     principal is Linux::User,
-    action == Linux::Action::"ReadLogs",
+    action in [Linux::Action::"read-logs", Linux::Action::"view-status"],
     resource == Linux::Service::"cedar-demo"
 )
 when {

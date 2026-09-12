@@ -14,7 +14,7 @@ namespace Linux {
 
   entity Host;
 
-  action "ReadLogs" appliesTo {
+  action "read-logs" appliesTo {
     principal: [User],
     resource: [Service],
     context: {
@@ -25,7 +25,7 @@ namespace Linux {
     }
   };
 
-  action "ViewStatus" appliesTo {
+  action "view-status" appliesTo {
     principal: [User],
     resource: [Service],
     context: {
@@ -36,7 +36,7 @@ namespace Linux {
     }
   };
 
-  action "Restart" appliesTo {
+  action "restart" appliesTo {
     principal: [User],
     resource: [Service],
     context: {
@@ -47,7 +47,7 @@ namespace Linux {
     }
   };
 
-  action "OpenShell" appliesTo {
+  action "open-shell" appliesTo {
     principal: [User],
     resource: [Host],
     context: {

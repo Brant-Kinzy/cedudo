@@ -68,7 +68,7 @@ sudo cp policy/cedudo.cjar /opt/cedudo/cedudo.cjar
 
 
 
-### 5. Set ownership and permissions
+### 5. Create C wrapper
 
 **Important:** Most modern Linux systems don't allow setuid on interpreted scripts. You must use the compiled C wrapper:
 
@@ -80,27 +80,6 @@ chmod +x install-wrapper.sh
 
 This creates `/opt/cedudo/cedudo` (a compiled binary with setuid) that executes the Python script.
 
-**Alternative (if wrapper is already installed):**
-
-```bash
-# Set root ownership
-sudo chown root:root \
-    /opt/cedudo/cedudo \
-    /opt/cedudo/cedudo.py \
-    /opt/cedudo/operations.json \
-    /opt/cedudo/cedudo.cjar
-
-# Set setuid on the wrapper binary
-sudo chmod 4755 /opt/cedudo/cedudo
-
-# Make config files and script read-only
-sudo chmod 0644 /opt/cedudo/cedudo.py
-sudo chmod 0644 /opt/cedudo/operations.json
-sudo chmod 0644 /opt/cedudo/cedudo.cjar
-```
-
-
-
 ### 6. Create a convenient symlink
 
 The `install-wrapper.sh` script already creates this, but if needed:
@@ -109,60 +88,59 @@ The `install-wrapper.sh` script already creates this, but if needed:
 sudo ln -sf /opt/cedudo/cedudo /usr/local/bin/cedudo
 ```
 
-After this, users can run:
-
-```bash
-cedudo view-logs
-cedudo restart-demo
-```
-
 ### 7. Create the demo users
 
-The starter policies authorize by Linux group. Create `alice` in `developers` and `bob` in `operators`, each with a home directory:
+The starter policies authorize by Linux group. Create `alice` in `developers` and `bob` in `operators`, each with a home directory and bash as the login shell (`useradd` otherwise defaults to `/bin/sh`):
 
 ```bash
 sudo groupadd developers
 sudo groupadd operators
-sudo useradd -m -G developers alice
-sudo useradd -m -G operators bob
+sudo useradd -m -s /bin/bash -G developers alice
+sudo useradd -m -s /bin/bash -G operators bob
 ```
 
-| User | Groups | Starter intent |
-|------|--------|----------------|
-| **alice** | `developers` | May read demo logs; may **not** restart yet |
-| **bob** | `operators` | May read logs and restart the demo service from the local console |
+
+| User      | Groups       | Starter intent                                                    |
+| --------- | ------------ | ----------------------------------------------------------------- |
+| **alice** | `developers` | May observe the demo (`read-logs`, `view-status`); may **not** restart |
+| **bob**   | `operators`  | May observe the demo and restart **noncritical** services from the local console |
+
+
+
 
 ## Verification
 
 After installation, verify the setup:
 
+# Check other files
 ```bash
-# Check the wrapper binary has setuid
-ls -l /opt/cedudo/cedudo
-
-# Should show:
-# -rwsr-xr-x root root cedudo    ← This is the compiled wrapper with setuid bit
+ls -l /opt/cedudo/
 ```
 
-```bash
-# Check other files
-ls -l /opt/cedudo/
-
-# Should show:
+Should show
+```
 # -rwsr-xr-x root root cedudo              ← Compiled wrapper (setuid)
 # -rw-r--r-- root root cedudo.py           ← Python script (no setuid needed)
 # -rw-r--r-- root root operations.json
 # -rw-r--r-- root root cedudo.cjar
-
 # Verify the setuid bit is set (should output '4755')
+```
+```bash
 stat -c '%a' /opt/cedudo/cedudo
+```
 
-# Verify ownership is root (should output '0')
+Verify ownership is root (should output '0')
+```bash
 stat -c '%u' /opt/cedudo/cedudo
+```
 
-# Test as a regular user (switch to alice or another non-root user)
+Test as a regular user (switch to alice or another non-root user)
+```bash
 su - alice
-cedudo view-logs
+```
+
+```bash
+cedudo read-logs
 ```
 
 **What to look for:**
