@@ -6,6 +6,5 @@ permit (
 )
 when {
     principal has groups &&
-    (principal.groups.contains("developers") ||
-     principal.groups.contains("operators"))
+    principal.groups.contains("developers")
 };
