@@ -14,7 +14,7 @@ This document describes how to install `cedudo` as a setuid-root executable.
 
 ```bash
 sudo apt update
-sudo apt install gcc python3 python3-venv python3-pip
+sudo apt install git gcc python3 python3-venv python3-pip
 ```
 
 ## Installation Steps
